@@ -13,30 +13,27 @@ const HOLIDAYS = {
   "1-26": "Republic Day",
   "3-25": "Holi",
   "4-14": "Dr. Ambedkar Jayanti",
-  "4-18": "Good Friday",
-  "5-12": "Buddha Purnima",
   "8-15": "Independence Day",
-  "8-27": "Janmashtami",
   "10-2": "Gandhi Jayanti",
-  "10-1": "Dussehra",
-  "10-20": "Diwali",
-  "11-5": "Guru Nanak Jayanti",
+  "10-20": "Dussehra",
+  "11-09": "Diwali",
+  "11-05": "Guru Nanak Jayanti",
   "12-25": "Christmas Day",
 };
 
 const MONTH_IMAGES = [
-  "https://images.unsplash.com/photo-1531366936337-77cf5e08ce27?w=800&q=80", 
-  "https://images.unsplash.com/photo-1462331940025-496dfbfc7564?w=800&q=80", 
-  "https://images.unsplash.com/photo-1444703686981-a3abbc4d4fe3?w=800&q=80", 
-  "https://images.unsplash.com/photo-1504333638930-c8787321fa0f?w=800&q=80", 
-  "https://images.unsplash.com/photo-1419242902214-272b3f66ee7a?w=800&q=80", 
-  "https://images.unsplash.com/photo-1465146344425-f00d5f5c8f07?w=800&q=80", 
-  "https://images.unsplash.com/photo-1579033461387-aad470f14652?w=800&q=80", 
-  "https://images.unsplash.com/photo-1522030299830-16b8d3d049fe?w=800&q=80", 
-  "https://images.unsplash.com/photo-1478760329108-5c3ed9d495a0?w=800&q=80", 
-  "https://images.unsplash.com/photo-1534447677768-be436bb09401?w=800&q=80", 
-  "https://images.unsplash.com/photo-1514317135010-82a932d433f6?w=800&q=80", 
-  "https://images.unsplash.com/photo-1513628253939-010e64ac66cd?w=800&q=80", 
+  "https://images.pexels.com/photos/1933316/pexels-photo-1933316.jpeg?auto=compress&cs=tinysrgb&w=800", 
+  "https://images.pexels.com/photos/2098428/pexels-photo-2098428.jpeg?auto=compress&cs=tinysrgb&w=800", 
+  "https://images.pexels.com/photos/1252890/pexels-photo-1252890.jpeg?auto=compress&cs=tinysrgb&w=800", 
+  "https://images.pexels.com/photos/2098405/pexels-photo-2098405.jpeg?auto=compress&cs=tinysrgb&w=800", 
+  "https://images.pexels.com/photos/1624438/pexels-photo-1624438.jpeg?auto=compress&cs=tinysrgb&w=800", 
+  "https://images.pexels.com/photos/1933239/pexels-photo-1933239.jpeg?auto=compress&cs=tinysrgb&w=800", 
+  "https://images.pexels.com/photos/5741305/pexels-photo-5741305.jpeg?auto=compress&cs=tinysrgb&w=800", 
+  "https://images.unsplash.com/photo-1464802686167-b939a6910659?w=800&q=80", 
+  "https://images.pexels.com/photos/360912/pexels-photo-360912.jpeg?auto=compress&cs=tinysrgb&w=800", 
+  "https://images.pexels.com/photos/956981/milky-way-starry-sky-night-sky-star-956981.jpeg?auto=compress&cs=tinysrgb&w=800", 
+  "https://images.pexels.com/photos/87651/earth-blue-planet-globe-planet-87651.jpeg?auto=compress&cs=tinysrgb&w=800", 
+  "https://images.pexels.com/photos/2873669/pexels-photo-2873669.jpeg?auto=compress&cs=tinysrgb&w=800", 
 ];
 
 const LeftArrow = () => (
@@ -55,7 +52,6 @@ function toDateNum(y, m, d) { return y * 10000 + m * 100 + d; }
 function formatDate(y, m, d) { return `${MONTH_NAMES[m - 1].slice(0, 3)} ${d}, ${y}`; }
 function getDayOfWeek(y, m, d) { return new Date(y, m - 1, d).getDay(); }
 
-// Parses an 8-digit date number back into { y, m, d } for readable labels
 function parseDateNum(num) {
   const y = Math.floor(num / 10000);
   const m = Math.floor((num % 10000) / 100);
@@ -81,7 +77,8 @@ function buildCalendarCells(year, month) {
   const nextMonth = month === 12 ? 1 : month + 1;
   const nextYear = month === 12 ? year + 1 : year;
   let fill = 1;
-  while (cells.length % 7 !== 0) {
+  // Force exactly 42 cells (6 rows of 7) to keep grid completely stable
+  while (cells.length < 42) {
     cells.push({ day: fill++, month: nextMonth, year: nextYear, other: true });
   }
   return cells;
@@ -89,7 +86,7 @@ function buildCalendarCells(year, month) {
 
 function SpiralBar() {
   return (
-    <div style={{ background: "#1f2937", height: 32, display: "flex", alignItems: "center", justifyContent: "space-evenly", padding: "0 20px", borderBottom: "2px solid #0b0f19" }}>
+    <div style={{ background: "#1f2937", flex: "0 0 32px", display: "flex", alignItems: "center", justifyContent: "space-evenly", padding: "0 20px", borderBottom: "2px solid #0b0f19", zIndex: 10 }}>
       {Array.from({ length: 30 }).map((_, i) => (
         <div key={i} style={{ 
           width: 8, height: 20, borderRadius: 4, 
@@ -101,16 +98,26 @@ function SpiralBar() {
   );
 }
 
-function HeroPanel({ month, year }) {
+function HeroPanel({ month, year, isMobile }) {
   const imgSrc = MONTH_IMAGES[(month - 1) % 12];
+  const [imgFailed, setImgFailed] = useState(false);
+
+  useEffect(() => { setImgFailed(false); }, [month]);
+
   return (
-    <div style={{ position: "relative", overflow: "hidden", background: "#0b0f19", height: "280px", width: "100%" }}>
-      <img src={imgSrc} alt={`${MONTH_NAMES[month - 1]} ${year}`} style={{ width: "100%", height: "100%", objectFit: "cover", opacity: 0.85 }} />
+    // FIX: Using relative flex scaling instead of fixed pixels (25% of height on desktop, fixed on mobile)
+    <div style={{ position: "relative", overflow: "hidden", background: "#0b0f19", flex: isMobile ? "none" : "0 0 25%", height: isMobile ? "200px" : "auto", width: "100%", zIndex: 1 }}>
+      {!imgFailed ? (
+        <img src={imgSrc} alt={`${MONTH_NAMES[month - 1]} ${year}`} onError={() => setImgFailed(true)} style={{ width: "100%", height: "100%", objectFit: "cover", opacity: 0.85 }} />
+      ) : (
+        <div style={{ width: "100%", height: "100%", background: "linear-gradient(135deg, #0f2027, #203a43, #2c5364)" }} />
+      )}
+      
       <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, height: "100px", background: "linear-gradient(to top, #111827, transparent)" }} />
       
-      <div style={{ position: "absolute", bottom: 20, right: 24, textAlign: "right", textShadow: "0 4px 12px rgba(0,0,0,0.8)" }}>
-        <div style={{ fontSize: 16, fontWeight: 400, letterSpacing: 6, color: "#9ca3af", fontFamily: "'DM Sans', sans-serif" }}>{year}</div>
-        <div style={{ fontSize: 36, fontWeight: 700, letterSpacing: 2, textTransform: "uppercase", lineHeight: 1, color: "#f3f4f6", fontFamily: "'Playfair Display', Georgia, serif" }}>
+      <div style={{ position: "absolute", bottom: "clamp(10px, 2vh, 20px)", right: 24, textAlign: "right", textShadow: "0 4px 12px rgba(0,0,0,0.8)" }}>
+        <div style={{ fontSize: "clamp(12px, 1.5vh, 16px)", fontWeight: 400, letterSpacing: 6, color: "#9ca3af", fontFamily: "'DM Sans', sans-serif" }}>{year}</div>
+        <div style={{ fontSize: "clamp(24px, 4vh, 36px)", fontWeight: 700, letterSpacing: 2, textTransform: "uppercase", lineHeight: 1, color: "#f3f4f6", fontFamily: "'Playfair Display', Georgia, serif" }}>
           {MONTH_NAMES[month - 1]}
         </div>
       </div>
@@ -136,19 +143,19 @@ function DayCell({ cell, isStart, isEnd, isInRange, isToday, holidayName, hasNot
       onClick={onClick}
       title={holidayName || ""}
       style={{
-        textAlign: "center", padding: "8px 0", fontSize: 13, cursor: "pointer",
+        display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
         background: bg, color, borderRadius, 
         fontWeight: isSelected ? 700 : isToday ? 600 : 400,
-        position: "relative", userSelect: "none", transition: "all 0.15s ease", minHeight: 36,
-        display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
+        position: "relative", userSelect: "none", transition: "all 0.1s ease", cursor: "pointer",
+        height: "100%", width: "100%", minHeight: 0, // Flex/Grid scaling magic
         border: isToday && !isSelected && !isInRange ? "1px solid #3b82f6" : "1px solid transparent"
       }}
       onMouseEnter={(e) => { if (!isSelected && !isInRange) e.currentTarget.style.background = "rgba(255,255,255,0.05)"; }}
       onMouseLeave={(e) => { if (!isSelected && !isInRange) e.currentTarget.style.background = "transparent"; }}
     >
-      {cell.day}
+      <span style={{ fontSize: "clamp(11px, 1.5vh, 14px)", zIndex: 2 }}>{cell.day}</span>
       
-      <div style={{ position: "absolute", bottom: 4, display: "flex", gap: "3px" }}>
+      <div style={{ position: "absolute", bottom: "clamp(2px, 0.5vh, 6px)", display: "flex", gap: "3px", zIndex: 2 }}>
         {holidayName && !isSelected && <div style={{ width: 4, height: 4, borderRadius: "50%", background: "#f472b6" }} />}
         {hasNote && !isSelected && <div style={{ width: 4, height: 4, borderRadius: "50%", background: "#60a5fa" }} />}
       </div>
@@ -158,9 +165,10 @@ function DayCell({ cell, isStart, isEnd, isInRange, isToday, holidayName, hasNot
 
 function NotesSection({ text, onChange, rangeLabel, contextNotes }) {
   return (
-    <div style={{ display: "flex", flexDirection: "column", height: "100%", background: "#1f2937", borderLeft: "1px solid #374151", overflow: "hidden" }}>
-      <div style={{ padding: "20px 24px 0" }}>
-        <div style={{ fontSize: 12, letterSpacing: 1.5, textTransform: "uppercase", color: "#9ca3af", fontWeight: 600, marginBottom: 16 }}>
+    // FIX: Using flex: 1 and minHeight: 0 to force containment within parent
+    <div style={{ display: "flex", flexDirection: "column", height: "100%", flex: 1, minHeight: 0, background: "#1f2937", borderLeft: "1px solid #374151" }}>
+      <div style={{ padding: "clamp(12px, 2vh, 20px) 24px 0", display: "flex", flexDirection: "column", flex: 1, minHeight: 0 }}>
+        <div style={{ fontSize: 12, letterSpacing: 1.5, textTransform: "uppercase", color: "#9ca3af", fontWeight: 600, flex: "0 0 auto", marginBottom: "clamp(8px, 1.5vh, 16px)" }}>
           {rangeLabel}
         </div>
         <textarea
@@ -168,8 +176,8 @@ function NotesSection({ text, onChange, rangeLabel, contextNotes }) {
           onChange={onChange}
           placeholder="Jot down notes here..."
           style={{
-            width: "100%", minHeight: "140px", border: "none", resize: "none",
-            fontFamily: "'DM Sans', sans-serif", fontSize: 14, color: "#e5e7eb", outline: "none", lineHeight: "2.4em",
+            width: "100%", flex: 1, minHeight: 0, border: "none", resize: "none",
+            fontFamily: "'DM Sans', sans-serif", fontSize: "clamp(13px, 1.8vh, 15px)", color: "#e5e7eb", outline: "none", lineHeight: "2.4em",
             backgroundImage: "repeating-linear-gradient(transparent, transparent calc(2.4em - 1px), #374151 calc(2.4em - 1px), #374151 2.4em)",
             backgroundAttachment: "local", backgroundColor: "transparent"
           }}
@@ -177,15 +185,15 @@ function NotesSection({ text, onChange, rangeLabel, contextNotes }) {
       </div>
 
       {contextNotes && contextNotes.length > 0 && (
-        <div style={{ padding: "0 24px 20px", marginTop: "12px", borderTop: "1px solid rgba(255,255,255,0.05)" }}>
-          <div style={{ fontSize: 10, letterSpacing: 1, textTransform: "uppercase", color: "#6b7280", fontWeight: 600, margin: "12px 0 8px" }}>
+        <div style={{ flex: "0 0 auto", padding: "0 24px clamp(12px, 2vh, 20px)", marginTop: "12px", borderTop: "1px solid rgba(255,255,255,0.05)", maxHeight: "35%", overflowY: "auto" }}>
+          <div style={{ fontSize: 10, letterSpacing: 1, textTransform: "uppercase", color: "#6b7280", fontWeight: 600, margin: "10px 0 6px" }}>
             Overlapping Notes
           </div>
-          <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+          <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
             {contextNotes.map((cn, i) => (
-              <div key={i} style={{ background: "rgba(0,0,0,0.2)", border: "1px solid rgba(255,255,255,0.05)", borderRadius: "6px", padding: "10px 12px" }}>
-                <div style={{ fontSize: 11, color: "#60a5fa", marginBottom: "4px", fontWeight: 600 }}>{cn.label}</div>
-                <div style={{ fontSize: 13, color: "#d1d5db", lineHeight: "1.5", whiteSpace: "pre-wrap" }}>{cn.text}</div>
+              <div key={i} style={{ background: "rgba(0,0,0,0.2)", border: "1px solid rgba(255,255,255,0.05)", borderRadius: "6px", padding: "8px 12px" }}>
+                <div style={{ fontSize: 11, color: "#60a5fa", marginBottom: "2px", fontWeight: 600 }}>{cn.label}</div>
+                <div style={{ fontSize: 12, color: "#d1d5db", lineHeight: "1.4", whiteSpace: "pre-wrap" }}>{cn.text}</div>
               </div>
             ))}
           </div>
@@ -212,7 +220,7 @@ export default function WallCalendar() {
     try {
       const stored = localStorage.getItem("wall-cal-db");
       if (stored) setAllNotes(JSON.parse(stored));
-    } catch (e) { console.error("Could not load notes", e); }
+    } catch (e) { console.error(e); }
   }, []);
 
   const cells = buildCalendarCells(viewYear, viewMonth);
@@ -235,17 +243,12 @@ export default function WallCalendar() {
       Object.entries(allNotes).forEach(([key, text]) => {
         if (key.startsWith("range-") && text.trim() !== "") {
           const parts = key.split("-");
-          // FIX: key format is "range-YYYYMMDD-YYYYMMDD", so parts are ["range", rStart, rEnd]
           const rStart = parseInt(parts[1]);
           const rEnd = parseInt(parts[2]);
           if (lo >= rStart && lo <= rEnd) {
-            // FIX: use parseDateNum for correct, year-aware labels
             const s = parseDateNum(rStart);
             const e = parseDateNum(rEnd);
-            contextNotes.push({ 
-              label: `Range note (${formatDate(s.y, s.m, s.d)} — ${formatDate(e.y, e.m, e.d)})`,
-              text 
-            });
+            contextNotes.push({ label: `Range note (${formatDate(s.y, s.m, s.d)} — ${formatDate(e.y, e.m, e.d)})`, text });
           }
         }
       });
@@ -257,12 +260,8 @@ export default function WallCalendar() {
         if (key.startsWith("day-") && text.trim() !== "") {
           const dNum = parseInt(key.split("-")[1]);
           if (dNum >= lo && dNum <= hi) {
-            // FIX: use parseDateNum for correct, year-aware labels
             const { y, m, d } = parseDateNum(dNum);
-            contextNotes.push({ 
-              label: `Note for ${formatDate(y, m, d)}`,
-              text 
-            });
+            contextNotes.push({ label: `Note for ${formatDate(y, m, d)}`, text });
           }
         }
       });
@@ -291,11 +290,8 @@ export default function WallCalendar() {
   }
 
   function handleDayClick(cell) {
-    // FIX: return early after navigating to prevent unintended date selection
     if (cell.other) {
-      setViewMonth(cell.month);
-      setViewYear(cell.year);
-      setAnimKey(prev => prev + 1);
+      setViewMonth(cell.month); setViewYear(cell.year); setAnimKey(prev => prev + 1);
       return;
     }
 
@@ -305,33 +301,23 @@ export default function WallCalendar() {
       setStartDate({ y: cell.year, m: cell.month, d: cell.day });
       setEndDate({ y: cell.year, m: cell.month, d: cell.day }); 
     } else if (startDate && endDate && sNum === eNum) {
-      if (num === sNum) {
-        setStartDate(null); setEndDate(null);
-      } else {
-        if (num < sNum) {
-          setEndDate(startDate); setStartDate({ y: cell.year, m: cell.month, d: cell.day });
-        } else {
-          setEndDate({ y: cell.year, m: cell.month, d: cell.day });
-        }
+      if (num === sNum) { setStartDate(null); setEndDate(null); } 
+      else {
+        if (num < sNum) { setEndDate(startDate); setStartDate({ y: cell.year, m: cell.month, d: cell.day }); } 
+        else { setEndDate({ y: cell.year, m: cell.month, d: cell.day }); }
       }
     }
   }
 
   function changeMonth(dir) {
-    if (dir === -1) {
-        if (viewMonth === 1) { setViewMonth(12); setViewYear(y => y - 1); } else setViewMonth(m => m - 1);
-    } else {
-        if (viewMonth === 12) { setViewMonth(1); setViewYear(y => y + 1); } else setViewMonth(m => m + 1);
-    }
+    if (dir === -1) { if (viewMonth === 1) { setViewMonth(12); setViewYear(y => y - 1); } else setViewMonth(m => m - 1); } 
+    else { if (viewMonth === 12) { setViewMonth(1); setViewYear(y => y + 1); } else setViewMonth(m => m + 1); }
     setAnimKey(prev => prev + 1);
   }
 
   let rangeInfo = "Select a date, or tap another to highlight a range.";
-  if (startDate && endDate && sNum === eNum) {
-    rangeInfo = `${formatDate(startDate.y, startDate.m, startDate.d)} selected.`;
-  } else if (startDate && endDate) {
-    rangeInfo = `${formatDate(startDate.y, startDate.m, startDate.d)} → ${formatDate(endDate.y, endDate.m, endDate.d)}`;
-  }
+  if (startDate && endDate && sNum === eNum) { rangeInfo = `${formatDate(startDate.y, startDate.m, startDate.d)} selected.`; } 
+  else if (startDate && endDate) { rangeInfo = `${formatDate(startDate.y, startDate.m, startDate.d)} → ${formatDate(endDate.y, endDate.m, endDate.d)}`; }
 
   const [isMobile, setIsMobile] = useState(false);
   useEffect(() => {
@@ -341,44 +327,48 @@ export default function WallCalendar() {
   }, []);
 
   return (
-    <div style={{ background: "#030712", minHeight: "100vh", padding: "2rem 1rem", boxSizing: "border-box", display: "flex", justifyContent: "center" }}>
+    // FIX: Core App Wrapper - height: 100vh restricts it to exactly the window bounds
+    <div style={{ background: "#030712", height: "100vh", padding: isMobile ? "1rem" : "2.5vh 2.5vw", boxSizing: "border-box", display: "flex", justifyContent: "center", alignItems: "center", overflow: isMobile ? "auto" : "hidden" }}>
       
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=DM+Sans:wght@400;600&display=swap');
-        @keyframes subtleFadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes subtleFadeIn { from { opacity: 0; transform: translateY(2px); } to { opacity: 1; transform: translateY(0); } }
       `}</style>
 
+      {/* FIX: Main Card Container - strictly flex column, height 100% of padded area */}
       <div style={{ 
         fontFamily: "'DM Sans', sans-serif", background: "#111827", borderRadius: 12, overflow: "hidden", 
-        width: "100%", maxWidth: 950, border: "1px solid #1f2937", 
+        width: "100%", maxWidth: 1000, height: isMobile ? "auto" : "100%", maxHeight: "900px", border: "1px solid #1f2937", 
         boxShadow: "0 25px 50px -12px rgba(0,0,0,0.5), 0 0 20px rgba(59, 130, 246, 0.05)",
-        display: "flex", flexDirection: "column"
+        display: "flex", flexDirection: "column", minHeight: 0
       }}>
         <SpiralBar />
-        <HeroPanel month={viewMonth} year={viewYear} />
+        <HeroPanel month={viewMonth} year={viewYear} isMobile={isMobile} />
 
-        <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1.3fr 1fr", flex: 1 }}>
+        {/* FIX: Content Split - flex: 1 combined with minHeight: 0 guarantees it stays inside parents */}
+        <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1.4fr 1fr", flex: 1, minHeight: 0 }}>
           
-          <div style={{ display: "flex", flexDirection: "column", borderBottom: isMobile ? "1px solid #1f2937" : "none" }}>
+          <div style={{ display: "flex", flexDirection: "column", height: "100%", minHeight: 0, borderBottom: isMobile ? "1px solid #1f2937" : "none" }}>
             
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "20px 24px 10px" }}>
-              <button onClick={() => changeMonth(-1)} style={{ background: "transparent", border: "1px solid #374151", color: "#9ca3af", borderRadius: 8, width: 36, height: 36, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", transition: "0.2s" }} onMouseEnter={e => e.currentTarget.style.color = "#fff"} onMouseLeave={e => e.currentTarget.style.color = "#9ca3af"}>
+            <div style={{ flex: "0 0 auto", display: "flex", alignItems: "center", justifyContent: "space-between", padding: "clamp(12px, 2vh, 20px) 24px clamp(6px, 1vh, 10px)" }}>
+              <button onClick={() => changeMonth(-1)} style={{ background: "transparent", border: "1px solid #374151", color: "#9ca3af", borderRadius: 8, width: 32, height: 32, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", transition: "0.2s" }} onMouseEnter={e => e.currentTarget.style.color = "#fff"} onMouseLeave={e => e.currentTarget.style.color = "#9ca3af"}>
                 <LeftArrow />
               </button>
               <div style={{ display: "flex", gap: 8, alignItems: "baseline" }}>
-                 <span style={{ fontSize: 16, fontWeight: 600, color: "#f3f4f6" }}>{MONTH_NAMES[viewMonth - 1]}</span>
-                 <span style={{ fontSize: 14, color: "#6b7280" }}>{viewYear}</span>
+                 <span style={{ fontSize: "clamp(14px, 2vh, 16px)", fontWeight: 600, color: "#f3f4f6" }}>{MONTH_NAMES[viewMonth - 1]}</span>
+                 <span style={{ fontSize: "clamp(12px, 1.8vh, 14px)", color: "#6b7280" }}>{viewYear}</span>
               </div>
-              <button onClick={() => changeMonth(1)} style={{ background: "transparent", border: "1px solid #374151", color: "#9ca3af", borderRadius: 8, width: 36, height: 36, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", transition: "0.2s" }} onMouseEnter={e => e.currentTarget.style.color = "#fff"} onMouseLeave={e => e.currentTarget.style.color = "#9ca3af"}>
+              <button onClick={() => changeMonth(1)} style={{ background: "transparent", border: "1px solid #374151", color: "#9ca3af", borderRadius: 8, width: 32, height: 32, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", transition: "0.2s" }} onMouseEnter={e => e.currentTarget.style.color = "#fff"} onMouseLeave={e => e.currentTarget.style.color = "#9ca3af"}>
                 <RightArrow />
               </button>
             </div>
             
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", padding: "10px 20px 4px" }}>
-              {DAY_HEADERS.map((h, i) => (<div key={h} style={{ textAlign: "center", fontSize: 11, fontWeight: 700, letterSpacing: 1, color: i >= 5 ? "#60a5fa" : "#6b7280", padding: "4px 0" }}>{h}</div>))}
+            <div style={{ flex: "0 0 auto", display: "grid", gridTemplateColumns: "repeat(7, 1fr)", padding: "0 20px clamp(4px, 1vh, 8px)" }}>
+              {DAY_HEADERS.map((h, i) => (<div key={h} style={{ textAlign: "center", fontSize: 10, fontWeight: 700, letterSpacing: 1, color: i >= 5 ? "#60a5fa" : "#6b7280" }}>{h}</div>))}
             </div>
             
-            <div key={animKey} style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", padding: "0 20px 20px", gap: "4px 0", animation: "subtleFadeIn 0.3s ease-out" }}>
+            {/* FIX: Calendar Grid uses gridTemplateRows to force days to scale up/down with viewport height */}
+            <div key={animKey} style={{ flex: 1, minHeight: 0, display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gridTemplateRows: "repeat(6, 1fr)", padding: "0 20px clamp(8px, 1.5vh, 16px)", gap: "2px", animation: "subtleFadeIn 0.3s ease-out" }}>
               {cells.map((cell, i) => {
                 const num = toDateNum(cell.year, cell.month, cell.day);
                 const isStart = !cell.other && lo !== null && num === lo;
@@ -396,7 +386,7 @@ export default function WallCalendar() {
               })}
             </div>
             
-            <div style={{ padding: "12px 24px", fontSize: 12, color: "#6b7280", borderTop: "1px solid #1f2937", background: "#111827", display: "flex", justifyContent: "space-between" }}>
+            <div style={{ flex: "0 0 auto", padding: "clamp(8px, 1.5vh, 12px) 24px", fontSize: 11, color: "#6b7280", borderTop: "1px solid #1f2937", background: "#111827", display: "flex", justifyContent: "space-between" }}>
               <span>{rangeInfo}</span>
               {startDate && <span style={{cursor: "pointer", color: "#3b82f6", fontWeight: 600}} onClick={() => {setStartDate(null); setEndDate(null);}}>Clear</span>}
             </div>
